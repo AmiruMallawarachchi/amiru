@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { motion } from 'framer-motion'
 import { useInView } from 'react-intersection-observer'
 import { useCursor } from '@/components/providers/CursorProvider'
@@ -32,23 +32,26 @@ export default function BlogPage() {
 
   // Fetch Medium posts via RSS-to-JSON
   import('react').then((React) => {
-    React.useEffect(() => {
-      async function fetchMediumPosts() {
-        try {
-          const res = await fetch('https://api.rss2json.com/v1/api.json?rss_url=https://medium.com/feed/@amirunoel8')
-          const data = await res.json()
-          if (data.status === 'ok') {
-            setPosts(data.items)
-          }
-        } catch (error) {
-          console.error("Failed to fetch Medium posts:", error)
-        } finally {
-          setLoading(false)
-        }
-      }
-      fetchMediumPosts()
-    }, [])
+    // Note: useEffect itself shouldn't be inside here, but since this is already in a client component, 
+    // we can just use the standard one from the component scope.
   })
+
+  useEffect(() => {
+    async function fetchMediumPosts() {
+      try {
+        const res = await fetch('https://api.rss2json.com/v1/api.json?rss_url=https://medium.com/feed/@amirunoel8')
+        const data = await res.json()
+        if (data.status === 'ok') {
+          setPosts(data.items)
+        }
+      } catch (error) {
+        console.error("Failed to fetch Medium posts:", error)
+      } finally {
+        setLoading(false)
+      }
+    }
+    fetchMediumPosts()
+  }, [])
 
   // Extract unique tags/categories
   const allTags = Array.from(

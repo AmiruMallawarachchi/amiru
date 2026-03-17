@@ -16,8 +16,19 @@ export default function Home() {
   const { setIsHovering } = useCursor()
   const containerRef = useRef<HTMLDivElement>(null)
   const [mousePosition, setMousePosition] = useState({ x: 0, y: 0 })
+  const [isMounted, setIsMounted] = useState(false)
+  const [floatingPoints, setFloatingPoints] = useState<{ left: string; top: string; duration: number; delay: number }[]>([])
 
   useEffect(() => {
+    setIsMounted(true)
+    const points = [...Array(20)].map(() => ({
+      left: `${Math.random() * 100}%`,
+      top: `${Math.random() * 100}%`,
+      duration: 3 + Math.random() * 2,
+      delay: Math.random() * 2,
+    }))
+    setFloatingPoints(points)
+
     const handleMouseMove = (e: MouseEvent) => {
       if (containerRef.current) {
         const rect = containerRef.current.getBoundingClientRect()
@@ -28,8 +39,10 @@ export default function Home() {
       }
     }
 
-    window.addEventListener('mousemove', handleMouseMove)
-    return () => window.removeEventListener('mousemove', handleMouseMove)
+    if (typeof window !== 'undefined') {
+      window.addEventListener('mousemove', handleMouseMove)
+      return () => window.removeEventListener('mousemove', handleMouseMove)
+    }
   }, [])
 
   return (
@@ -54,26 +67,23 @@ export default function Home() {
 
       {/* Floating Elements */}
       <div className="fixed inset-0 pointer-events-none">
-        {[...Array(20)].map((_, i) => (
+        {isMounted && floatingPoints.map((point, i) => (
           <motion.div
             key={i}
             className="absolute w-1 h-1 bg-white rounded-full"
-            initial={{
-              x: Math.random() * window.innerWidth,
-              y: Math.random() * window.innerHeight,
-            }}
+            initial={{ opacity: 0 }}
             animate={{
               y: [0, -100, 0],
               opacity: [0, 1, 0],
             }}
             transition={{
-              duration: 3 + Math.random() * 2,
+              duration: point.duration,
               repeat: Infinity,
-              delay: Math.random() * 2,
+              delay: point.delay,
             }}
             style={{
-              left: `${Math.random() * 100}%`,
-              top: `${Math.random() * 100}%`,
+              left: point.left,
+              top: point.top,
             }}
           />
         ))}

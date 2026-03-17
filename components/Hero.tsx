@@ -10,9 +10,19 @@ const MotionStar = motion(Star)
 export const Hero = () => {
   const { setIsHovering } = useCursor()
   const [text, setText] = useState('')
+  const [stars, setStars] = useState<{ left: string; top: string; duration: number; delay: number }[]>([])
   const fullText = 'AI & Innovation Enthusiast'
 
   useEffect(() => {
+    // Generate stars only on the client
+    const newStars = [...Array(50)].map(() => ({
+      left: `${Math.random() * 100}%`,
+      top: `${Math.random() * 100}%`,
+      duration: 2 + Math.random() * 3,
+      delay: Math.random() * 2,
+    }))
+    setStars(newStars)
+
     let index = 0
     const timer = setInterval(() => {
       if (index <= fullText.length) {
@@ -33,13 +43,13 @@ export const Hero = () => {
 
       {/* Animated Background Stars */}
       <div className="absolute inset-0 overflow-hidden">
-        {[...Array(50)].map((_, i) => (
+        {stars.map((star, i) => (
           <motion.div
             key={i}
             className="absolute"
             style={{
-              left: `${Math.random() * 100}%`,
-              top: `${Math.random() * 100}%`,
+              left: star.left,
+              top: star.top,
             }}
           >
             <MotionStar
@@ -50,9 +60,9 @@ export const Hero = () => {
                 scale: [0.8, 1.2, 0.8],
               }}
               transition={{
-                duration: 2 + Math.random() * 3,
+                duration: star.duration,
                 repeat: Infinity,
-                delay: Math.random() * 2,
+                delay: star.delay,
               }}
             />
           </motion.div>
