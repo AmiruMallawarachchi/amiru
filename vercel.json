@@ -3,13 +3,6 @@
   "outputDirectory": ".next",
   "installCommand": "npm install",
   "framework": "nextjs",
-  "env": {
-    "NEXT_PUBLIC_SUPABASE_URL": "@supabase-url",
-    "NEXT_PUBLIC_SUPABASE_ANON_KEY": "@supabase-anon-key",
-    "EMAILJS_PUBLIC_KEY": "@emailjs-public-key",
-    "EMAILJS_SERVICE_ID": "@emailjs-service-id",
-    "EMAILJS_TEMPLATE_ID": "@emailjs-template-id"
-  },
   "headers": [
     {
       "source": "/(.*)",
