@@ -1,72 +1,51 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { motion } from 'framer-motion'
 import { useInView } from 'react-intersection-observer'
-import { useCursor } from '../components/providers/CursorProvider'
+import { useCursor } from '@/components/providers/CursorProvider'
 import Link from 'next/link'
 import { Github, ExternalLink, Play, FileText } from 'lucide-react'
+import { supabase, type Project } from '@/lib/supabase'
 
-const projects = [
+const fallbackProjects: Project[] = [
   {
-    id: 1,
+    id: '1',
     title: 'AI-Powered Code Assistant',
     description: 'An intelligent code completion and generation tool using transformer models that understands context and suggests relevant code snippets.',
-    image: '/projects/code-assistant.png',
+    long_description: 'An intelligent code completion and generation tool using transformer models...',
+    image_url: '/projects/code-assistant.png',
+    video_url: null,
     tags: ['Python', 'PyTorch', 'Transformers', 'NLP'],
-    github: 'https://github.com/amirunoel/ai-code-assistant',
-    live: 'https://ai-code-assistant.vercel.app',
-    huggingface: 'https://huggingface.co/amirunoel/code-assistant',
-    featured: true,
+    github_url: 'https://github.com/amirunoel/ai-code-assistant',
+    live_url: 'https://ai-code-assistant.vercel.app',
+    huggingface_url: 'https://huggingface.co/amirunoel/code-assistant',
+    wiki_url: null,
+    architecture_details: null,
+    tech_stack: [],
+    achievements: [],
+    challenges: [],
+    is_featured: true,
+    created_at: new Date().toISOString()
   },
   {
-    id: 2,
+    id: '2',
     title: 'Real-time Object Detection System',
     description: 'High-performance computer vision system for detecting and tracking objects in video streams with 99% accuracy.',
-    image: '/projects/object-detection.png',
+    long_description: 'High-performance computer vision system...',
+    image_url: '/projects/object-detection.png',
+    video_url: null,
     tags: ['Python', 'TensorFlow', 'OpenCV', 'YOLO'],
-    github: 'https://github.com/amirunoel/object-detection',
-    live: 'https://object-detection-demo.vercel.app',
-    featured: true,
-  },
-  {
-    id: 3,
-    title: 'Neural Style Transfer API',
-    description: 'RESTful API service that applies artistic styles to images using deep neural networks, supporting custom model training.',
-    image: '/projects/style-transfer.png',
-    tags: ['FastAPI', 'PyTorch', 'Docker', 'AWS'],
-    github: 'https://github.com/amirunoel/style-transfer-api',
-    live: 'https://style-transfer-api.io',
-    featured: false,
-  },
-  {
-    id: 4,
-    title: 'LLM Chatbot with RAG',
-    description: 'Advanced conversational AI with Retrieval-Augmented Generation for domain-specific question answering.',
-    image: '/projects/llm-chatbot.png',
-    tags: ['LangChain', 'Vector DB', 'OpenAI', 'Next.js'],
-    github: 'https://github.com/amirunoel/llm-chatbot',
-    live: 'https://llm-chatbot-demo.vercel.app',
-    featured: false,
-  },
-  {
-    id: 5,
-    title: 'Sentiment Analysis Dashboard',
-    description: 'Real-time sentiment analysis tool for social media monitoring with interactive visualizations.',
-    image: '/projects/sentiment-analysis.png',
-    tags: ['Python', 'Scikit-learn', 'React', 'D3.js'],
-    github: 'https://github.com/amirunoel/sentiment-dashboard',
-    featured: false,
-  },
-  {
-    id: 6,
-    title: 'AI Music Generator',
-    description: 'Generative AI model that creates original music compositions in various styles and genres.',
-    image: '/projects/music-generator.png',
-    tags: ['PyTorch', 'Magenta', 'MIDI', 'React'],
-    github: 'https://github.com/amirunoel/ai-music-generator',
-    huggingface: 'https://huggingface.co/amirunoel/music-generator',
-    featured: false,
+    github_url: 'https://github.com/amirunoel/object-detection',
+    live_url: 'https://object-detection-demo.vercel.app',
+    huggingface_url: null,
+    wiki_url: null,
+    architecture_details: null,
+    tech_stack: [],
+    achievements: [],
+    challenges: [],
+    is_featured: true,
+    created_at: new Date().toISOString()
   },
 ]
 
@@ -77,10 +56,33 @@ export default function ProjectsPage() {
     threshold: 0.1,
   })
   const [filter, setFilter] = useState<'all' | 'featured'>('all')
+  const [projects, setProjects] = useState<Project[]>(fallbackProjects)
+  const [loading, setLoading] = useState(true)
+
+  useEffect(() => {
+    async function fetchProjects() {
+      try {
+        const { data, error } = await supabase
+          .from('projects')
+          .select('*')
+          .order('created_at', { ascending: false })
+        
+        if (data && data.length > 0) {
+          setProjects(data)
+        }
+      } catch (err) {
+        console.error('Error fetching projects:', err)
+      } finally {
+        setLoading(false)
+      }
+    }
+    
+    fetchProjects()
+  }, [])
 
   const filteredProjects = filter === 'all'
     ? projects
-    : projects.filter(p => p.featured)
+    : projects.filter(p => p.is_featured)
 
   const allTags = Array.from(
     new Set(projects.flatMap(p => p.tags))
@@ -148,11 +150,11 @@ export default function ProjectsPage() {
                   <div className="aspect-video relative overflow-hidden bg-gray-800">
                     <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent z-10" />
                     <img
-                      src={project.image}
+                      src={project.image_url || '/placeholder.jpg'}
                       alt={project.title}
                       className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
                     />
-                    {project.featured && (
+                    {project.is_featured && (
                       <div className="absolute top-4 right-4 z-20 px-3 py-1 bg-yellow-500 text-black text-xs font-bold rounded-full">
                         Featured
                       </div>
@@ -189,10 +191,10 @@ export default function ProjectsPage() {
                     </div>
 
                     {/* Links */}
-                    <div className="flex gap-3">
-                      {project.github && (
+                    <div className="flex gap-3 mt-auto">
+                      {project.github_url && (
                         <a
-                          href={project.github}
+                          href={project.github_url}
                           target="_blank"
                           rel="noopener noreferrer"
                           onClick={(e) => e.stopPropagation()}
@@ -209,9 +211,9 @@ export default function ProjectsPage() {
                           <Github className="w-4 h-4" />
                         </a>
                       )}
-                      {project.live && (
+                      {project.live_url && (
                         <a
-                          href={project.live}
+                          href={project.live_url}
                           target="_blank"
                           rel="noopener noreferrer"
                           onClick={(e) => e.stopPropagation()}
@@ -228,9 +230,9 @@ export default function ProjectsPage() {
                           <ExternalLink className="w-4 h-4" />
                         </a>
                       )}
-                      {project.huggingface && (
+                      {project.huggingface_url && (
                         <a
-                          href={project.huggingface}
+                          href={project.huggingface_url}
                           target="_blank"
                           rel="noopener noreferrer"
                           onClick={(e) => e.stopPropagation()}
