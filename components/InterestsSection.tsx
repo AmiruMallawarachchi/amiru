@@ -1,5 +1,6 @@
 'use client'
 
+import { useEffect, useState } from 'react'
 import { motion } from 'framer-motion'
 import { useInView } from 'react-intersection-observer'
 import { useCursor } from './providers/CursorProvider'
@@ -62,6 +63,17 @@ export const InterestsSection = () => {
     triggerOnce: true,
     threshold: 0.1,
   })
+
+  const [hearts, setHearts] = useState<{ xRange: number[]; duration: number; delay: number }[]>([])
+
+  useEffect(() => {
+    const newHearts = [...Array(5)].map(() => ({
+      xRange: [0, Math.random() * 100 - 50, 0],
+      duration: 5 + Math.random() * 5,
+      delay: Math.random() * 5,
+    }))
+    setHearts(newHearts)
+  }, [])
 
   return (
     <section ref={ref} className="relative py-20 px-6">
@@ -143,7 +155,7 @@ export const InterestsSection = () => {
 
       {/* Floating Hearts */}
       <div className="absolute inset-0 pointer-events-none overflow-hidden">
-        {[...Array(5)].map((_, i) => (
+        {hearts.map((heart, i) => (
           <motion.div
             key={i}
             className="absolute"
@@ -154,12 +166,12 @@ export const InterestsSection = () => {
             animate={{
               y: [0, -100, -200],
               opacity: [0, 1, 0],
-              x: [0, Math.random() * 100 - 50, 0],
+              x: heart.xRange,
             }}
             transition={{
-              duration: 5 + Math.random() * 5,
+              duration: heart.duration,
               repeat: Infinity,
-              delay: Math.random() * 5,
+              delay: heart.delay,
             }}
           >
             <Heart className="w-4 h-4 text-red-500 opacity-30" fill="white" />

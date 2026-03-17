@@ -5,7 +5,7 @@ import { motion } from 'framer-motion'
 import { ChevronDown, Star } from 'lucide-react'
 import { useCursor } from '@/components/providers/CursorProvider'
 
-const MotionStar = motion(Star)
+const MotionStar = motion.create(Star)
 
 export const Hero = () => {
   const { setIsHovering } = useCursor()
