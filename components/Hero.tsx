@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react'
 import { motion } from 'framer-motion'
 import { ChevronDown, Star } from 'lucide-react'
-import { useCursor } from './providers/CursorProvider'
+import { useCursor } from '@/components/providers/CursorProvider'
 
 export const Hero = () => {
   const { setIsHovering } = useCursor()

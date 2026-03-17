@@ -2,7 +2,7 @@
 
 import { motion } from 'framer-motion'
 import { useInView } from 'react-intersection-observer'
-import { useCursor } from './providers/CursorProvider'
+import { useCursor } from '@/components/providers/CursorProvider'
 import { Code, Database, Brain, Cloud, Cpu, BarChart } from 'lucide-react'
 
 const skillsCategories = [

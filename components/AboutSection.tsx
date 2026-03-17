@@ -5,7 +5,7 @@ import { useSpring, animated } from '@react-spring/web'
 import { Canvas } from '@react-three/fiber'
 import { OrbitControls, Box, Plane } from '@react-three/drei'
 import { useRef, useState } from 'react'
-import { useCursor } from './providers/CursorProvider'
+import { useCursor } from '@/components/providers/CursorProvider'
 
 // 3D Laptop Component
 function Laptop3D({ mousePosition }: { mousePosition: { x: number; y: number } }) {
