@@ -6,7 +6,10 @@ import { useInView } from 'react-intersection-observer'
 import { useCursor } from '@/components/providers/CursorProvider'
 import Link from 'next/link'
 import { Github, ExternalLink, Play, FileText } from 'lucide-react'
-import { supabase, type Project } from '@/lib/supabase'
+import { createClient } from '@/utils/supabase/client'
+import { type Project } from '@/lib/supabase'
+
+const supabase = createClient()
 
 const fallbackProjects: Project[] = [
   {

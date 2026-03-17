@@ -5,7 +5,10 @@ import { useParams, useRouter } from 'next/navigation'
 import { motion } from 'framer-motion'
 import { useCursor } from '@/components/providers/CursorProvider'
 import { Github, ExternalLink, ArrowLeft, Play, FileText, BookOpen, Code } from 'lucide-react'
-import { supabase, type Project } from '@/lib/supabase'
+import { createClient } from '@/utils/supabase/client'
+import { type Project } from '@/lib/supabase'
+
+const supabase = createClient()
 
 export default function ProjectDetail() {
   const params = useParams()
