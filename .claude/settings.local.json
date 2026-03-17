@@ -1,0 +1,8 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(npm install @react-spring/web)",
+      "Bash(npm run dev)"
+    ]
+  }
+}
