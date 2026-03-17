@@ -5,6 +5,8 @@ import { motion } from 'framer-motion'
 import { ChevronDown, Star } from 'lucide-react'
 import { useCursor } from '@/components/providers/CursorProvider'
 
+const MotionStar = motion(Star)
+
 export const Hero = () => {
   const { setIsHovering } = useCursor()
   const [text, setText] = useState('')
@@ -40,7 +42,7 @@ export const Hero = () => {
               top: `${Math.random() * 100}%`,
             }}
           >
-            <Star
+            <MotionStar
               className="w-1 h-1 text-white opacity-50"
               fill="white"
               animate={{
