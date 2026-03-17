@@ -3,79 +3,21 @@
 import { useState } from 'react'
 import { motion } from 'framer-motion'
 import { useInView } from 'react-intersection-observer'
-import { useCursor } from '../components/providers/CursorProvider'
+import { useCursor } from '@/components/providers/CursorProvider'
 import Link from 'next/link'
 import { Calendar, Clock, ExternalLink, ArrowRight } from 'lucide-react'
 
-// Mock blog posts - In production, these would come from Medium API
-const blogPosts = [
-  {
-    id: 1,
-    title: 'Building Scalable AI Applications with Next.js and Python',
-    excerpt: 'Learn how to create production-ready AI applications using Next.js for the frontend and Python for the AI backend. This guide covers everything from setup to deployment.',
-    image: '/blog/nextjs-python-ai.jpg',
-    publishedAt: '2024-03-15',
-    readTime: '8 min read',
-    tags: ['Next.js', 'Python', 'AI', 'Tutorial'],
-    url: 'https://medium.com/@amirunoel/building-scalable-ai-applications',
-    featured: true,
-  },
-  {
-    id: 2,
-    title: 'Understanding Transformer Models: A Deep Dive',
-    excerpt: 'Explore the architecture and inner workings of transformer models that power modern AI systems like GPT and BERT.',
-    image: '/blog/transformer-models.jpg',
-    publishedAt: '2024-02-28',
-    readTime: '12 min read',
-    tags: ['Deep Learning', 'Transformers', 'NLP'],
-    url: 'https://medium.com/@amirunoel/understanding-transformer-models',
-    featured: false,
-  },
-  {
-    id: 3,
-    title: 'Optimizing Neural Networks for Production',
-    excerpt: 'Practical techniques for optimizing and deploying neural networks in production environments, including quantization, pruning, and distillation.',
-    image: '/blog/optimizing-nn-production.jpg',
-    publishedAt: '2024-02-10',
-    readTime: '10 min read',
-    tags: ['Neural Networks', 'Optimization', 'MLOps'],
-    url: 'https://medium.com/@amirunoel/optimizing-neural-networks',
-    featured: false,
-  },
-  {
-    id: 4,
-    title: 'The Future of Generative AI: Trends and Predictions',
-    excerpt: 'An analysis of current trends in generative AI and predictions for where the field is heading in the next few years.',
-    image: '/blog/future-gen-ai.jpg',
-    publishedAt: '2024-01-25',
-    readTime: '6 min read',
-    tags: ['Generative AI', 'Future', 'Trends'],
-    url: 'https://medium.com/@amirunoel/future-of-generative-ai',
-    featured: true,
-  },
-  {
-    id: 5,
-    title: 'Implementing RAG Systems with Vector Databases',
-    excerpt: 'A comprehensive guide to building Retrieval-Augmented Generation systems using vector databases for efficient knowledge retrieval.',
-    image: '/blog/rag-systems.jpg',
-    publishedAt: '2024-01-10',
-    readTime: '9 min read',
-    tags: ['RAG', 'Vector DB', 'LLM'],
-    url: 'https://medium.com/@amirunoel/implementing-rag-systems',
-    featured: false,
-  },
-  {
-    id: 6,
-    title: 'Ethical Considerations in AI Development',
-    excerpt: 'Exploring the ethical implications of AI development and how to build responsible AI systems.',
-    image: '/blog/ai-ethics.jpg',
-    publishedAt: '2023-12-20',
-    readTime: '7 min read',
-    tags: ['AI Ethics', 'Responsible AI'],
-    url: 'https://medium.com/@amirunoel/ethical-considerations-in-ai',
-    featured: false,
-  },
-]
+interface MediumPost {
+  title: string;
+  pubDate: string;
+  link: string;
+  guid: string;
+  author: string;
+  thumbnail: string;
+  description: string;
+  content: string;
+  categories: string[];
+}
 
 export default function BlogPage() {
   const { setIsHovering } = useCursor()
@@ -83,17 +25,44 @@ export default function BlogPage() {
     triggerOnce: true,
     threshold: 0.1,
   })
+  
+  const [posts, setPosts] = useState<MediumPost[]>([])
   const [filter, setFilter] = useState<string>('all')
+  const [loading, setLoading] = useState(true)
 
+  // Fetch Medium posts via RSS-to-JSON
+  import('react').then((React) => {
+    React.useEffect(() => {
+      async function fetchMediumPosts() {
+        try {
+          const res = await fetch('https://api.rss2json.com/v1/api.json?rss_url=https://medium.com/feed/@amirunoel8')
+          const data = await res.json()
+          if (data.status === 'ok') {
+            setPosts(data.items)
+          }
+        } catch (error) {
+          console.error("Failed to fetch Medium posts:", error)
+        } finally {
+          setLoading(false)
+        }
+      }
+      fetchMediumPosts()
+    }, [])
+  })
+
+  // Extract unique tags/categories
   const allTags = Array.from(
-    new Set(blogPosts.flatMap(p => p.tags))
+    new Set(posts.flatMap(p => p.categories))
   ).sort()
 
   const filteredPosts = filter === 'all'
-    ? blogPosts
-    : blogPosts.filter(p => p.tags.includes(filter))
+    ? posts
+    : posts.filter(p => p.categories.includes(filter))
 
-  const featuredPosts = blogPosts.filter(p => p.featured)
+  // Treat first post as featured if any exist
+  const featuredPosts = posts.length > 0 ? [posts[0]] : []
+  // Remaining posts for standard grid
+  const gridPosts = posts.length > 0 ? filteredPosts.filter(p => p.guid !== posts[0].guid) : filteredPosts
 
   return (
     <div className="min-h-screen bg-black text-white px-6 py-20">
@@ -115,17 +84,21 @@ export default function BlogPage() {
         </motion.div>
 
         {/* Featured Posts */}
-        {featuredPosts.length > 0 && (
+        {loading ? (
+           <div className="flex justify-center items-center h-64">
+              <div className="w-12 h-12 border-4 border-white border-t-transparent rounded-full animate-spin"></div>
+           </div>
+        ) : featuredPosts.length > 0 && (
           <motion.div
             initial={{ opacity: 0, y: 30 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.8, delay: 0.2 }}
             className="mb-16"
           >
-            <h2 className="text-2xl font-bold mb-8">Featured Articles</h2>
-            <div className="grid md:grid-cols-2 gap-8">
+            <h2 className="text-2xl font-bold mb-8">Latest Article</h2>
+            <div className="grid md:grid-cols-1 gap-8 max-w-4xl mx-auto">
               {featuredPosts.map((post) => (
-                <FeaturedPostCard key={post.id} post={post} />
+                <FeaturedPostCard key={post.guid} post={post} />
               ))}
             </div>
           </motion.div>
@@ -169,9 +142,9 @@ export default function BlogPage() {
 
         {/* Posts Grid */}
         <div ref={ref} className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
-          {filteredPosts.map((post, index) => (
+          {!loading && gridPosts.map((post, index) => (
             <motion.div
-              key={post.id}
+              key={post.guid}
               initial={{ opacity: 0, scale: 0.9 }}
               animate={inView ? { opacity: 1, scale: 1 } : {}}
               transition={{ duration: 0.5, delay: index * 0.1 }}
@@ -190,7 +163,7 @@ export default function BlogPage() {
           className="text-center mt-16"
         >
           <motion.a
-            href="https://medium.com/@amirunoel"
+            href="https://medium.com/@amirunoel8"
             target="_blank"
             rel="noopener noreferrer"
             whileHover={{ scale: 1.05 }}
@@ -208,13 +181,28 @@ export default function BlogPage() {
   )
 }
 
+// Function to extract text content from Medium HTML description
+const getTextFromHtml = (html: string) => {
+  if (typeof window === 'undefined') return html.replace(/<[^>]+>/g, '').substring(0, 150) + '...';
+  const doc = new DOMParser().parseFromString(html, 'text/html');
+  const text = doc.body.textContent || "";
+  return text.substring(0, 150) + '...';
+};
+
 // Featured Post Card Component
-function FeaturedPostCard({ post }: { post: any }) {
+function FeaturedPostCard({ post }: { post: MediumPost }) {
   const { setIsHovering } = useCursor()
+
+  // Find the first image in the description if thumbnail is empty
+  let imageUrl = post.thumbnail;
+  if (!imageUrl || imageUrl.includes("stat?event=post.login")) {
+     const imgMatch = post.description.match(/<img[^>]+src="([^">]+)"/);
+     imageUrl = imgMatch ? imgMatch[1] : '/placeholder.jpg';
+  }
 
   return (
     <motion.a
-      href={post.url}
+      href={post.link}
       target="_blank"
       rel="noopener noreferrer"
       whileHover={{ scale: 1.02 }}
@@ -225,7 +213,7 @@ function FeaturedPostCard({ post }: { post: any }) {
       {/* Image */}
       <div className="aspect-video relative overflow-hidden bg-gray-800">
         <img
-          src={post.image}
+          src={imageUrl}
           alt={post.title}
           className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
         />
@@ -240,11 +228,7 @@ function FeaturedPostCard({ post }: { post: any }) {
         <div className="flex items-center gap-4 text-sm text-gray-400 mb-4">
           <div className="flex items-center gap-2">
             <Calendar className="w-4 h-4" />
-            {new Date(post.publishedAt).toLocaleDateString()}
-          </div>
-          <div className="flex items-center gap-2">
-            <Clock className="w-4 h-4" />
-            {post.readTime}
+            {new Date(post.pubDate).toLocaleDateString()}
           </div>
         </div>
 
@@ -253,12 +237,12 @@ function FeaturedPostCard({ post }: { post: any }) {
         </h3>
 
         <p className="text-gray-400 mb-6 line-clamp-3">
-          {post.excerpt}
+          {getTextFromHtml(post.description)}
         </p>
 
         {/* Tags */}
         <div className="flex flex-wrap gap-2 mb-6">
-          {post.tags.slice(0, 3).map((tag: string) => (
+          {post.categories.slice(0, 3).map((tag: string) => (
             <span
               key={tag}
               className="px-3 py-1 bg-white/10 rounded-full text-xs"
@@ -281,12 +265,18 @@ function FeaturedPostCard({ post }: { post: any }) {
 }
 
 // Blog Post Card Component
-function BlogPostCard({ post }: { post: any }) {
+function BlogPostCard({ post }: { post: MediumPost }) {
   const { setIsHovering } = useCursor()
+
+  let imageUrl = post.thumbnail;
+  if (!imageUrl || imageUrl.includes("stat?event=post.login")) {
+     const imgMatch = post.description.match(/<img[^>]+src="([^">]+)"/);
+     imageUrl = imgMatch ? imgMatch[1] : '/placeholder.jpg';
+  }
 
   return (
     <motion.a
-      href={post.url}
+      href={post.link}
       target="_blank"
       rel="noopener noreferrer"
       whileHover={{ scale: 1.02 }}
@@ -297,7 +287,7 @@ function BlogPostCard({ post }: { post: any }) {
       {/* Image */}
       <div className="aspect-video relative overflow-hidden bg-gray-800">
         <img
-          src={post.image}
+          src={imageUrl}
           alt={post.title}
           className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
         />
@@ -306,9 +296,7 @@ function BlogPostCard({ post }: { post: any }) {
       {/* Content */}
       <div className="p-6">
         <div className="flex items-center gap-4 text-sm text-gray-400 mb-4">
-          <span>{new Date(post.publishedAt).toLocaleDateString()}</span>
-          <span>•</span>
-          <span>{post.readTime}</span>
+          <span>{new Date(post.pubDate).toLocaleDateString()}</span>
         </div>
 
         <h3 className="text-lg font-bold mb-2 group-hover:text-white transition-colors line-clamp-2">
@@ -316,12 +304,12 @@ function BlogPostCard({ post }: { post: any }) {
         </h3>
 
         <p className="text-gray-400 text-sm mb-4 line-clamp-3">
-          {post.excerpt}
+          {getTextFromHtml(post.description)}
         </p>
 
         {/* Tags */}
         <div className="flex flex-wrap gap-2">
-          {post.tags.slice(0, 2).map((tag: string) => (
+          {post.categories.slice(0, 2).map((tag: string) => (
             <span
               key={tag}
               className="px-2 py-1 bg-white/10 rounded-full text-xs"
@@ -329,9 +317,9 @@ function BlogPostCard({ post }: { post: any }) {
               {tag}
             </span>
           ))}
-          {post.tags.length > 2 && (
+          {post.categories.length > 2 && (
             <span className="px-2 py-1 bg-white/10 rounded-full text-xs">
-              +{post.tags.length - 2}
+              +{post.categories.length - 2}
             </span>
           )}
         </div>

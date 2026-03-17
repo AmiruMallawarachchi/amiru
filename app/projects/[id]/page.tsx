@@ -1,77 +1,67 @@
 'use client'
 
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { useParams, useRouter } from 'next/navigation'
 import { motion } from 'framer-motion'
-import { useCursor } from '../../components/providers/CursorProvider'
+import { useCursor } from '@/components/providers/CursorProvider'
 import { Github, ExternalLink, ArrowLeft, Play, FileText, BookOpen, Code } from 'lucide-react'
-
-const projectDetails = {
-  '1': {
-    id: 1,
-    title: 'AI-Powered Code Assistant',
-    description: 'An intelligent code completion and generation tool using transformer models that understands context and suggests relevant code snippets.',
-    longDescription: `
-      This project represents a significant advancement in AI-powered development tools. By leveraging state-of-the-art transformer models,
-      the code assistant can understand the context of your code and provide intelligent suggestions, completions, and even entire function implementations.
-
-      The system is trained on millions of code repositories across multiple programming languages, ensuring it understands best practices,
-      design patterns, and common idioms. It goes beyond simple autocompletion by suggesting entire code blocks, explaining code,
-      and even helping with debugging.
-
-      Key features include multi-language support, context-aware suggestions, real-time collaboration, and the ability to learn
-      from your coding style to provide personalized recommendations.
-    `,
-    image: '/projects/code-assistant.png',
-    video: '/projects/code-assistant-demo.mp4',
-    tags: ['Python', 'PyTorch', 'Transformers', 'NLP', 'REST API', 'VSCode Extension'],
-    github: 'https://github.com/amirunoel/ai-code-assistant',
-    live: 'https://ai-code-assistant.vercel.app',
-    huggingface: 'https://huggingface.co/amirunoel/code-assistant',
-    wiki: 'https://github.com/amirunoel/ai-code-assistant/wiki',
-    architecture: `
-      - Frontend: React + TypeScript + Tailwind CSS
-      - Backend: FastAPI + Python
-      - Model: Custom-trained GPT-style transformer model
-      - Database: PostgreSQL + Redis for caching
-      - Deployment: Docker + Kubernetes on AWS
-      - Monitoring: Prometheus + Grafana
-    `,
-    techStack: [
-      { name: 'PyTorch', description: 'Deep learning framework for model training' },
-      { name: 'FastAPI', description: 'High-performance async web framework' },
-      { name: 'PostgreSQL', description: 'Primary database for user data and configurations' },
-      { name: 'Redis', description: 'Caching layer for improved performance' },
-      { name: 'Docker', description: 'Containerization for deployment' },
-      { name: 'AWS', description: 'Cloud infrastructure and services' },
-    ],
-    achievements: [
-      '10,000+ active users',
-      '99.9% uptime',
-      'Sub-200ms response time',
-      'Featured in TechCrunch',
-    ],
-    challenges: [
-      'Training model on diverse code patterns',
-      'Optimizing for real-time performance',
-      'Ensuring code security and privacy',
-      'Handling multiple programming languages',
-    ],
-  },
-}
+import { supabase, type Project } from '@/lib/supabase'
 
 export default function ProjectDetail() {
   const params = useParams()
   const router = useRouter()
   const { setIsHovering } = useCursor()
   const [activeTab, setActiveTab] = useState<'overview' | 'architecture' | 'tech'>('overview')
+  const [project, setProject] = useState<Project | null>(null)
+  const [loading, setLoading] = useState(true)
 
-  const project = projectDetails[params.id as string]
+  useEffect(() => {
+    async function fetchProject() {
+      if (!params.id) return
+      
+      try {
+        const { data, error } = await supabase
+          .from('projects')
+          .select('*')
+          .eq('id', params.id as string)
+          .single()
+          
+        if (data) {
+          setProject(data)
+        }
+      } catch (err) {
+        console.error('Error fetching project:', err)
+      } finally {
+        setLoading(false)
+      }
+    }
+    
+    fetchProject()
+  }, [params.id])
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-black text-white flex items-center justify-center">
+        <div className="animate-pulse flex flex-col items-center">
+          <div className="w-12 h-12 border-4 border-white border-t-transparent rounded-full animate-spin"></div>
+          <p className="mt-4 text-gray-400">Loading project details...</p>
+        </div>
+      </div>
+    )
+  }
 
   if (!project) {
     return (
       <div className="min-h-screen bg-black text-white flex items-center justify-center">
-        <div>Project not found</div>
+        <div className="text-center">
+          <h2 className="text-2xl font-bold mb-4">Project not found</h2>
+          <button 
+            onClick={() => router.back()}
+            className="px-6 py-2 border border-white rounded-full hover:bg-white hover:text-black transition-colors"
+          >
+            Go Back
+          </button>
+        </div>
       </div>
     )
   }
@@ -84,7 +74,7 @@ export default function ProjectDetail() {
 
         {/* Background Video/Image */}
         <div className="absolute inset-0">
-          {project.video ? (
+          {project.video_url ? (
             <video
               autoPlay
               muted
@@ -92,11 +82,11 @@ export default function ProjectDetail() {
               playsInline
               className="w-full h-full object-cover"
             >
-              <source src={project.video} type="video/mp4" />
+              <source src={project.video_url} type="video/mp4" />
             </video>
           ) : (
             <img
-              src={project.image}
+              src={project.image_url || '/placeholder.jpg'}
               alt={project.title}
               className="w-full h-full object-cover"
             />
@@ -156,11 +146,11 @@ export default function ProjectDetail() {
             initial={{ opacity: 0, y: 30 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.8 }}
-            className="flex gap-4 justify-center"
+            className="flex flex-wrap gap-4 justify-center"
           >
-            {project.github && (
+            {project.github_url && (
               <motion.a
-                href={project.github}
+                href={project.github_url}
                 target="_blank"
                 rel="noopener noreferrer"
                 whileHover={{ scale: 1.05 }}
@@ -173,9 +163,9 @@ export default function ProjectDetail() {
                 View Code
               </motion.a>
             )}
-            {project.live && (
+            {project.live_url && (
               <motion.a
-                href={project.live}
+                href={project.live_url}
                 target="_blank"
                 rel="noopener noreferrer"
                 whileHover={{ scale: 1.05 }}
@@ -188,9 +178,9 @@ export default function ProjectDetail() {
                 Live Demo
               </motion.a>
             )}
-            {project.huggingface && (
+            {project.huggingface_url && (
               <motion.a
-                href={project.huggingface}
+                href={project.huggingface_url}
                 target="_blank"
                 rel="noopener noreferrer"
                 whileHover={{ scale: 1.05 }}
@@ -259,28 +249,36 @@ export default function ProjectDetail() {
                   <div className="md:col-span-2">
                     <h3 className="text-2xl font-bold mb-6">About the Project</h3>
                     <div className="space-y-4 text-gray-300 whitespace-pre-wrap">
-                      {project.longDescription}
+                      {project.long_description}
                     </div>
 
-                    <h3 className="text-2xl font-bold mt-12 mb-6">Key Achievements</h3>
-                    <ul className="space-y-3">
-                      {project.achievements.map((achievement, index) => (
-                        <li key={index} className="flex items-center text-gray-300">
-                          <span className="text-green-400 mr-3">✓</span>
-                          {achievement}
-                        </li>
-                      ))}
-                    </ul>
+                    {project.achievements && project.achievements.length > 0 && (
+                      <>
+                        <h3 className="text-2xl font-bold mt-12 mb-6">Key Achievements</h3>
+                        <ul className="space-y-3">
+                          {project.achievements.map((achievement, index) => (
+                            <li key={index} className="flex items-center text-gray-300">
+                              <span className="text-green-400 mr-3">✓</span>
+                              {achievement}
+                            </li>
+                          ))}
+                        </ul>
+                      </>
+                    )}
 
-                    <h3 className="text-2xl font-bold mt-12 mb-6">Challenges Overcome</h3>
-                    <ul className="space-y-3">
-                      {project.challenges.map((challenge, index) => (
-                        <li key={index} className="flex items-center text-gray-300">
-                          <span className="text-yellow-400 mr-3">◆</span>
-                          {challenge}
-                        </li>
-                      ))}
-                    </ul>
+                    {project.challenges && project.challenges.length > 0 && (
+                      <>
+                        <h3 className="text-2xl font-bold mt-12 mb-6">Challenges Overcome</h3>
+                        <ul className="space-y-3">
+                          {project.challenges.map((challenge, index) => (
+                            <li key={index} className="flex items-center text-gray-300">
+                              <span className="text-yellow-400 mr-3">◆</span>
+                              {challenge}
+                            </li>
+                          ))}
+                        </ul>
+                      </>
+                    )}
                   </div>
 
                   <div>
@@ -288,9 +286,9 @@ export default function ProjectDetail() {
                       <div className="p-6 rounded-2xl bg-gradient-to-b from-gray-900 to-black border border-gray-800">
                         <h4 className="font-bold mb-4">Quick Links</h4>
                         <div className="space-y-3">
-                          {project.github && (
+                          {project.github_url && (
                             <a
-                              href={project.github}
+                              href={project.github_url}
                               target="_blank"
                               rel="noopener noreferrer"
                               className="flex items-center gap-2 text-gray-300 hover:text-white"
@@ -299,9 +297,9 @@ export default function ProjectDetail() {
                               Source Code
                             </a>
                           )}
-                          {project.wiki && (
+                          {project.wiki_url && (
                             <a
-                              href={project.wiki}
+                              href={project.wiki_url}
                               target="_blank"
                               rel="noopener noreferrer"
                               className="flex items-center gap-2 text-gray-300 hover:text-white"
@@ -310,9 +308,9 @@ export default function ProjectDetail() {
                               Documentation
                             </a>
                           )}
-                          {project.live && (
+                          {project.live_url && (
                             <a
-                              href={project.live}
+                              href={project.live_url}
                               target="_blank"
                               rel="noopener noreferrer"
                               className="flex items-center gap-2 text-gray-300 hover:text-white"
@@ -351,8 +349,8 @@ export default function ProjectDetail() {
               <div>
                 <h3 className="text-2xl font-bold mb-6">System Architecture</h3>
                 <div className="bg-gray-900 rounded-2xl p-8 mb-8">
-                  <pre className="text-gray-300 whitespace-pre-wrap font-mono">
-                    {project.architecture}
+                  <pre className="text-gray-300 whitespace-pre-wrap font-mono relative overflow-x-auto text-sm">
+                    {project.architecture_details || "Architecture details not provided."}
                   </pre>
                 </div>
 
@@ -374,19 +372,23 @@ export default function ProjectDetail() {
               <div>
                 <h3 className="text-2xl font-bold mb-6">Technology Stack</h3>
                 <div className="grid md:grid-cols-2 gap-6">
-                  {project.techStack.map((tech, index) => (
-                    <motion.div
-                      key={tech.name}
-                      initial={{ opacity: 0, scale: 0.9 }}
-                      animate={{ opacity: 1, scale: 1 }}
-                      transition={{ delay: index * 0.1 }}
-                      whileHover={{ scale: 1.02 }}
-                      className="p-6 rounded-2xl bg-gradient-to-b from-gray-900 to-black border border-gray-800"
-                    >
-                      <h4 className="text-lg font-bold mb-2">{tech.name}</h4>
-                      <p className="text-gray-400 text-sm">{tech.description}</p>
-                    </motion.div>
-                  ))}
+                  {project.tech_stack && project.tech_stack.length > 0 ? (
+                    project.tech_stack.map((tech, index) => (
+                      <motion.div
+                        key={index}
+                        initial={{ opacity: 0, scale: 0.9 }}
+                        animate={{ opacity: 1, scale: 1 }}
+                        transition={{ delay: index * 0.1 }}
+                        whileHover={{ scale: 1.02 }}
+                        className="p-6 rounded-2xl bg-gradient-to-b from-gray-900 to-black border border-gray-800"
+                      >
+                        <h4 className="text-lg font-bold mb-2">{tech.name}</h4>
+                        <p className="text-gray-400 text-sm">{tech.description}</p>
+                      </motion.div>
+                    ))
+                  ) : (
+                    <p className="text-gray-400">Tech stack details not provided.</p>
+                  )}
                 </div>
               </div>
             )}

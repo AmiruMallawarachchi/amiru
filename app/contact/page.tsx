@@ -2,7 +2,7 @@
 
 import { useState } from 'react'
 import { motion } from 'framer-motion'
-import { useCursor } from '../components/providers/CursorProvider'
+import { useCursor } from '@/components/providers/CursorProvider'
 import { Mail, Phone, MapPin, Send, Github, Linkedin, Twitter } from 'lucide-react'
 import emailjs from '@emailjs/browser'
 
@@ -22,12 +22,20 @@ export default function ContactPage() {
 
     try {
       // Initialize EmailJS with your credentials
-      emailjs.init('YOUR_PUBLIC_KEY') // Replace with your EmailJS public key
+      const publicKey = process.env.NEXT_PUBLIC_EMAILJS_PUBLIC_KEY;
+      const serviceId = process.env.NEXT_PUBLIC_EMAILJS_SERVICE_ID;
+      const templateId = process.env.NEXT_PUBLIC_EMAILJS_TEMPLATE_ID;
+
+      if (!publicKey || !serviceId || !templateId) {
+        throw new Error('EmailJS credentials are not configured.');
+      }
+
+      emailjs.init(publicKey)
 
       // Send email
       await emailjs.send(
-        'YOUR_SERVICE_ID', // Replace with your EmailJS service ID
-        'YOUR_TEMPLATE_ID', // Replace with your EmailJS template ID
+        serviceId,
+        templateId,
         {
           from_name: formData.name,
           from_email: formData.email,
@@ -135,7 +143,7 @@ export default function ContactPage() {
                 {[
                   { icon: Github, href: 'https://github.com/amirunoel', label: 'GitHub' },
                   { icon: Linkedin, href: 'https://linkedin.com/in/amirumallawaarachchi', label: 'LinkedIn' },
-                  { icon: Twitter, href: 'https://twitter.com/amirunoel', label: 'Twitter' },
+                  { icon: Twitter, href: 'https://twitter.com/amirunoel8', label: 'Twitter' },
                 ].map((social) => (
                   <motion.a
                     key={social.label}
